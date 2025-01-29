@@ -10,8 +10,6 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:go-spot.highlightGoFiles",
-    "onCommand:go-spot.navigateToTest",
     "workspaceContains:**/*.go"
   ],
   "main": "./out/extension.js",
@@ -24,6 +22,14 @@
       {
         "command": "go-spot.navigateToTest",
         "title": "Go Spot: Navigate to test.go:6"
+      },
+      {
+        "command": "go-spot.analyzeGoFiles",
+        "title": "Go Spot: Analyze Go Files"
+      },
+      {
+        "command": "go-spot.showStructInfo",
+        "title": "Go Spot: Show Struct Information"
       }
     ]
   },
