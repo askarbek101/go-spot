@@ -1,71 +1,94 @@
-# go-spot README
+# Go Spot - VS Code Extension
 
-This is the README for your extension "go-spot". After writing up a brief description, we recommend including the following sections.
+A powerful VS Code extension for analyzing and understanding Go codebases by visualizing relationships between interfaces and structs.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Real-time Code Analysis**: Automatically analyzes your Go codebase to identify interfaces, structs, and their relationships.
+- **Interface Implementation Detection**: Automatically detects and displays which structs implement which interfaces.
+- **Interactive Visualization**: Provides a web view interface to explore the relationships between your Go types.
+- **Code Decoration**: Adds inline decorations to struct declarations showing which interfaces they implement.
+- **Quick Navigation**: Includes commands for quick navigation between related code elements.
+- **Caching System**: Implements an efficient caching system to improve performance during analysis.
 
-For example if there is an image subfolder under your extension project workspace:
+## Commands
 
-\!\[feature X\]\(images/feature-x.png\)
+The extension provides several commands that can be accessed through the VS Code command palette:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- `go-spot.analyzeGoFiles`: Analyzes all Go files in the workspace and displays results in a webview panel.
+- `go-spot.showStructInfo`: Shows detailed information about a selected struct.
+- `go-spot.navigateToTest`: Navigates to related test files.
+
+## Features in Detail
+
+### Code Analysis
+- Detects all interfaces and structs in your Go codebase
+- Identifies method signatures and parameters
+- Maps relationships between interfaces and their implementing structs
+- Tracks embedded types in structs
+
+### Visual Feedback
+- Inline annotations showing interface implementations
+- Detailed webview panel showing:
+  - List of all interfaces with their methods
+  - List of all structs with their methods
+  - Implementation relationships
+  - File locations and line numbers
+
+### Performance
+- Implements caching to avoid unnecessary re-analysis
+- Cache invalidation after 5 seconds
+- Global state management for persistent data storage
+
+## Installation
+
+1. Open VS Code
+2. Go to the Extensions view (Ctrl+Shift+X)
+3. Search for "Go Spot"
+4. Click Install
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Visual Studio Code version 1.60.0 or higher
+- Go programming language installed on your system
+
+## Usage
+
+1. Open a Go project in VS Code
+2. The extension will automatically analyze your code on startup
+3. Use the command palette (Ctrl+Shift+P) to access Go Spot commands
+4. Click on struct declarations to see interface implementations
+5. Use the webview panel to explore your codebase structure
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- `go-spot.enable`: Enable/disable the extension
+- `go-spot.decorations`: Enable/disable inline decorations
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Large codebases might experience slight delay during initial analysis
+- Cache invalidation might cause brief analysis delays
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+- Initial release
+- Basic interface and struct analysis
+- Webview visualization
+- Code decorations
+- Navigation features
 
 ---
 
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+**Enjoy using Go Spot!**
