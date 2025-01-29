@@ -10,14 +10,20 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:go-spot.helloWorld"
+    "onCommand:go-spot.highlightGoFiles",
+    "onCommand:go-spot.navigateToTest",
+    "workspaceContains:**/*.go"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "go-spot.helloWorld",
-        "title": "Hello World"
+        "command": "go-spot.highlightGoFiles",
+        "title": "Go Spot: Highlight First Row of Go Files"
+      },
+      {
+        "command": "go-spot.navigateToTest",
+        "title": "Go Spot: Navigate to test.go:6"
       }
     ]
   },
