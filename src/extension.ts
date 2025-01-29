@@ -58,6 +58,31 @@ class AnalysisCacheManager {
 
 let cacheManager: AnalysisCacheManager;
 
+// Add storage manager
+class StorageManager {
+	private storage: vscode.Memento;
+	private readonly STORAGE_KEY = 'goAnalyzerData';
+
+	constructor(context: vscode.ExtensionContext) {
+		this.storage = context.globalState;
+	}
+
+	async saveAnalysisData(data: GoAnalysisResult) {
+		await this.storage.update(this.STORAGE_KEY, data);
+		log('Analysis data saved to storage');
+	}
+
+	getAnalysisData(): GoAnalysisResult | undefined {
+		return this.storage.get<GoAnalysisResult>(this.STORAGE_KEY);
+	}
+
+	async clear() {
+		await this.storage.update(this.STORAGE_KEY, undefined);
+	}
+}
+
+let storageManager: StorageManager;
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -66,6 +91,34 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const analyzer = new GoAnalyzerService(context);
 	cacheManager = new AnalysisCacheManager(analyzer);
+	storageManager = new StorageManager(context);
+
+	// Initial workspace analysis
+	async function analyzeWorkspaceAndStore() {
+		try {
+			const workspaceFolders = vscode.workspace.workspaceFolders;
+			if (!workspaceFolders) {
+				return;
+			}
+
+			log('Starting initial workspace analysis');
+			const result = await analyzer.analyzeWorkspace(workspaceFolders[0].uri.fsPath);
+			await storageManager.saveAnalysisData(result);
+			log('Initial analysis complete and stored');
+
+			// Refresh decorations in all visible editors
+			vscode.window.visibleTextEditors.forEach(editor => {
+				if (editor.document.languageId === 'go') {
+					decorateGoFile(editor);
+				}
+			});
+		} catch (error) {
+			log('Initial analysis failed:', error);
+		}
+	}
+
+	// Trigger initial analysis when VS Code starts
+	analyzeWorkspaceAndStore();
 
 	// Register analyze command
 	let analyzeCommand = vscode.commands.registerCommand('go-spot.analyzeGoFiles', async () => {
@@ -243,29 +296,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};
 
-	// Add file save handlers
-	context.subscriptions.push(
-		vscode.workspace.onDidSaveTextDocument(async (document) => {
-			if (document.languageId === 'go') {
-				log('Go file saved, invalidating cache');
-				cacheManager.invalidateCache();
-				if (vscode.window.activeTextEditor) {
-					await decorateGoFile(vscode.window.activeTextEditor);
-				}
-			}
-		}),
-		vscode.workspace.onDidSaveTextDocument(async (document) => {
-			if (document.languageId === 'go') {
-				const workspaceFolders = vscode.workspace.workspaceFolders;
-				if (workspaceFolders) {
-					// Trigger reanalysis after save
-					await cacheManager.getAnalysisData(workspaceFolders[0].uri.fsPath, true);
-				}
-			}
-		})
-	);
-
-	// Modify decorateStructDeclarations to use cache
+	// Modify decorateStructDeclarations to use stored data
 	async function decorateStructDeclarations(editor: vscode.TextEditor) {
 		try {
 			const document = editor.document;
@@ -273,20 +304,18 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			const workspaceFolders = vscode.workspace.workspaceFolders;
-			if (!workspaceFolders) {
+			// Get stored analysis data
+			const analysisData = storageManager.getAnalysisData();
+			if (!analysisData) {
+				log('No stored analysis data found');
 				return;
 			}
 
-			// Get the text of the current file
+			// Rest of the decoration logic remains the same
 			const text = document.getText();
-			// Updated regex to handle generic types
 			const structRegex = /type\s+(\w+)(?:\[[\w\s,]+\])?\s+struct\s*{/g;
 			let match;
 			const decorations: vscode.DecorationOptions[] = [];
-
-			// Get analysis data from cache
-			const analysisData = await cacheManager.getAnalysisData(workspaceFolders[0].uri.fsPath);
 
 			while ((match = structRegex.exec(text)) !== null) {
 				const structName = match[1];
@@ -294,18 +323,14 @@ export function activate(context: vscode.ExtensionContext) {
 				const line = pos.line;
 				const lineText = document.lineAt(line).text;
 
-				// Find struct in cached data by name only, ignoring file path
 				const struct = analysisData.structs.find(s => {
-					// Remove generic type parameters for comparison
 					const baseStructName = s.name.split('[')[0];
 					return baseStructName === structName;
 				});
 
 				if (struct && struct.implementedInterfaces.length > 0) {
-					// Get unique interface names and sort them
 					const uniqueInterfaces = Array.from(new Set(
 						struct.implementedInterfaces.map(i => {
-							// Remove generic type parameters for display
 							const baseName = i.name.split('[')[0];
 							return baseName;
 						})
@@ -344,14 +369,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register event handlers
 	context.subscriptions.push(
 		vscode.window.onDidChangeActiveTextEditor(editor => {
-			log('Active editor changed');
-			if (editor) {
+			if (editor && editor.document.languageId === 'go') {
 				decorateGoFile(editor);
 			}
 		}),
 		vscode.workspace.onDidOpenTextDocument(doc => {
-			log('Document opened');
-			if (vscode.window.activeTextEditor && doc === vscode.window.activeTextEditor.document) {
+			if (doc.languageId === 'go' && vscode.window.activeTextEditor) {
 				decorateGoFile(vscode.window.activeTextEditor);
 			}
 		}),
@@ -362,7 +385,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initial decoration for active editor
 	if (vscode.window.activeTextEditor) {
-		log('Decorating initial active editor');
 		decorateGoFile(vscode.window.activeTextEditor);
 	}
 
